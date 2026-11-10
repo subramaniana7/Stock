@@ -1,0 +1,47 @@
+WINDOWS TASK SCHEDULER — NSE WEEKLY OHLC
+
+Task name: NSE Weekly OHLC
+Schedule: every Saturday at 09:00 India Standard Time.
+First scheduled report: Saturday 14 November 2026, covering 9–13 November.
+NSE holidays are excluded using the official CM/FO holiday calendar.
+
+Reports stay outside OneDrive:
+C:\Users\Subramanian\Desktop\NSE Weekly OHLC\outputs
+
+If the PC is shut down, the report cannot run then. Windows is configured to
+catch up on missed starts. A sign-in trigger checks again one minute after
+you sign in. The task uses your signed-in Windows account without storing
+a password; it cannot execute while everyone is signed out. It requests
+wake-from-sleep, subject to your computer's wake timer/power support.
+
+Failures are retried three times, 15 minutes apart. A later sign-in or weekly
+run also retries unfinished reports. If internet is unavailable beyond these
+retries, reconnect and run the task manually or sign in again. The runner
+does not require Codex or Excel to be open. Do not move or rename this folder.
+
+Missed weeks since the first scheduled date are tracked individually, so
+turning the PC on in a later week does not silently skip the earlier report.
+Each completed workbook is dated by its Monday–Friday report period.
+The weekly trigger and a sign-in check do not regenerate successful reports.
+
+Status: last_run_status.json
+Detailed activity/errors: logs\weekly_update.log
+Completed-week receipts: schedule_state.json
+Schedule configuration: schedule_config.json
+Task definition backup: Windows Task Scheduler.xml
+
+To run now: open Windows Task Scheduler, select Task Scheduler Library,
+select NSE Weekly OHLC and choose Run. An early run before 14 November
+09:00 makes no new report because none is due yet.
+To stop automatic updates: select the task and choose Disable.
+
+Holiday data are refreshed from NSE's official holiday API. If a refreshed
+calendar is unavailable, the last validated calendar for that year is used
+with a warning in the log. If no calendar for the year is available, the
+report fails and stays pending. Missing price archives are never treated
+as holidays. Confirmed weekend special sessions require a manual report
+with --include-date; the automatic report is Monday–Friday as requested.
+
+Manual updater: Update Excel.cmd or update_weekly_ohlc.py. On Saturdays
+and Sundays it selects the Monday–Friday week just finished; on weekdays
+it selects the previous finished Monday–Friday week.

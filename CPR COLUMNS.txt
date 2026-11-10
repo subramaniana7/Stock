@@ -1,0 +1,35 @@
+CPR COLUMNS — DAILY AND WEEKLY
+
+F Pivot = (High + Low + Close) / 3
+G TC = MAX((High + Low) / 2, 2 * Pivot - (High + Low) / 2)
+H BC = MIN((High + Low) / 2, 2 * Pivot - (High + Low) / 2)
+I TC-BC = TC - BC
+J CPR Width % = (TC - BC) / Pivot * 100; blank for zero Pivot
+K CPR Classification = Very Narrow / Narrow / Medium / Above Medium
+
+TC is always the higher boundary, so width is nonnegative. Classification
+uses full precision, not the displayed rounded values. Pivot displays whole
+rupees; TC/BC/width/width percentage display two decimals.
+J stores percentage POINTS: 0.05 means 0.05%, not 5%. It uses an ordinary
+number format because the formula already multiplies by 100.
+
+Very Narrow: below 0.05% (light green)
+Narrow: 0.05% to below 0.10% (light blue)
+Medium: 0.10% through 0.20% (light amber)
+Above Medium: above 0.20% (light grey)
+
+Daily: use that completed session's HLC, for the next trading session.
+Weekly: use that completed week's HLC, for the following week.
+Filter column K to select classifications. Conditional formatting updates
+the classification colour when inputs/formulas change. A CPR Guide sheet
+explains the categories, formulas and interpretation in every workbook.
+
+The categories are descriptive, and their market-behaviour descriptions are
+possibilities. Width alone does not establish a breakout probability.
+
+Both automatic schedules retain their existing timing, retries and catch-up.
+The weekly Excel exporter now uses the same installed workbook runtime
+as the daily exporter, enabling formulas, filters and conditional formatting.
+Keep daily_config.json and daily_runtime available even for weekly exports.
+
+Original reports were backed up locally before the CPR migration.

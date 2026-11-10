@@ -1,0 +1,15 @@
+import {Workbook} from '@oai/artifact-tool';
+import {applyCPR,verifyCPR,CLASS_FORMULA} from './cpr.mjs';
+const w=Workbook.create(),s=w.worksheets.add('CPR Tests');
+s.getRange('A1:E1').values=[['Symbol','Open','High','Low','Close']];
+s.getRange('A2').write([['TOP',100,110,90,110],['REVERSE',100,110,90,90],['FLAT',100,100,100,100],['ZERO',0,0,0,0]]);
+applyCPR(s,5,'TestPrices');w.recalculate();verifyCPR(s,5);
+if(s.getRange('G3').values[0][0]<s.getRange('H3').values[0][0])throw Error('TC below BC');
+const b=w.worksheets.add('Boundaries');
+const widths=[0,0.049999999,0.05,0.09999999,0.10,0.20,0.20000001,null];
+b.getRange('J2').write(widths.map(x=>[x]));
+b.getRange('K2').formulas=[[CLASS_FORMULA]];b.getRange('K2:K9').fillDown();w.recalculate();
+const labels=b.getRange('K2:K9').values.map(r=>r[0]);
+const expected=['Very Narrow','Very Narrow','Narrow','Narrow','Medium','Medium','Above Medium',''];
+if(JSON.stringify(labels)!==JSON.stringify(expected))throw Error(JSON.stringify(labels));
+console.log('PASS: normalized/reversed boundaries, zero pivot, flat prices, full precision and all classification cutoff/blank cases.');

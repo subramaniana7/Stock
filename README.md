@@ -1,0 +1,131 @@
+# NSE stock OHLC reports and CPR
+
+Source backup of the daily and weekly NSE F&O-stock reporting system, including
+the CPR columns and classifications. The running installation is separate from
+this checkout; publishing this repository does not modify its scheduled tasks.
+
+## Reports
+
+- **Weekly:** cash-market OHLC for the union of stock underlyings in the selected
+  week's NSE stock futures/options files. Runs Saturdays at 09:00 IST.
+- **Daily:** each session's cash-market OHLC for that day's F&O stock universe.
+  Checks every 15 minutes from 16:30 through 22:00 IST, with 09:00 and sign-in
+  catch-up. One workbook per week, with a sheet per trading day.
+- Both include Pivot, normalized TC/BC, nonnegative CPR width, width percentage,
+  colour-coded classification, filters and a CPR Guide sheet.
+
+Prices are unadjusted NSE cash EQ/F1 prices in INR, not futures-contract prices.
+NSE's official final CM and FO UDiFF archives are validated before a date is
+processed. Holidays use NSE's official CM/FO calendar; a failed price download is
+never silently treated as a holiday. Pending dates/weeks are retained for retry.
+
+| CPR classification | Width percentage |
+| --- | --- |
+| Very Narrow | Below 0.05% |
+| Narrow | 0.05% to below 0.10% |
+| Medium | 0.10% through 0.20% |
+| Above Medium | Above 0.20% |
+
+Column J stores percentage points: `0.05` means `0.05%`. Classification uses full
+precision. TC is always the higher boundary. These categories describe width;
+they do not establish breakout probabilities.
+
+## Requirements and restore
+
+This is a backup of a Windows installation that uses **Python 3.10+**, **Node.js**
+and the **Codex bundled `@oai/artifact-tool` package** for Excel authoring. The
+Python programs use the standard library; the report builders additionally need
+that bundled Node package. Python integration tests use `openpyxl` for reading
+and verification. Dependencies and market-data downloads are not committed.
+
+1. Clone or copy the source into your chosen local report folder, outside
+   OneDrive if local-only storage is desired. For the existing PC, the running
+   folder is the local Desktop's `NSE Weekly OHLC` directory.
+2. Copy `daily_config.example.json` to `daily_config.json`, and
+   `schedule_config.example.json` to `schedule_config.json`. Existing local
+   configuration files from the running installation can be reused instead.
+3. Set `node_executable` to the installed bundled Node executable. Ensure
+   `daily_runtime/node_modules` resolves to the matching bundled Node packages.
+   On Windows, create a junction with PowerShell, using your actual package path:
+
+   ```powershell
+   New-Item -ItemType Junction -Path .\daily_runtime\node_modules -Target 'C:\path\to\bundled\node_modules'
+   ```
+
+4. Review the starting dates. `daily_config.json`'s `first_date` controls daily
+   backfill. `schedule_config.json`'s `first_run` must be a Saturday at 09:00 IST
+   and controls the first weekly report. Retain the example dates to recover the
+   original November 2026 start, or choose the intended new start dates.
+5. Test the programs manually with the full path to your Python executable:
+
+   ```powershell
+   python update_weekly_ohlc.py --auto-holidays
+   python daily_update.py
+   python scheduled_update.py --check-only
+   ```
+
+   On this PC, `python` may not be on PATH; use its full executable path instead.
+6. Only when intentionally installing tasks, run the installers below. They
+   refuse to overwrite an existing task of the same name:
+
+   ```powershell
+   .\install_schedule.ps1 -ReportFolder $PWD.Path -PythonExecutable 'C:\path\to\pythonw.exe'
+   .\install_daily_schedule.ps1 -ReportFolder $PWD.Path -PythonExecutable 'C:\path\to\pythonw.exe'
+   ```
+
+   Both require Windows timezone **India Standard Time**. The weekly installer
+   reads the first scheduled date from `schedule_config.json`. Daily trigger times
+   are defined in `install_daily_schedule.ps1`; the config's polling fields are
+   descriptive and do not automatically re-register Windows task triggers.
+
+Once tasks are installed, do not move the installation folder without updating
+their actions. The PC must be on and the configured user signed in. Wake timers
+are requested, subject to hardware/Windows support. Missed starts and sign-in
+checks catch up; failures retry three times at 15-minute intervals. Codex and
+Excel do not need to remain open, but the bundled runtime must remain installed.
+
+## Files
+
+| File | Purpose |
+| --- | --- |
+| `update_weekly_ohlc.py` | Official downloads, holidays, weekly aggregation/export |
+| `scheduled_update.py` | Weekly pending-run tracking and catch-up |
+| `daily_update.py` | Daily collection, validation, per-week workbook updates |
+| `daily_runtime/build_weekly.mjs` | Weekly workbook builder |
+| `daily_runtime/build_daily.mjs` | Daily workbook builder |
+| `daily_runtime/cpr.mjs` | CPR formulas, conditional formatting, guide and checks |
+| `install_schedule.ps1` | Weekly Windows Task Scheduler installation |
+| `install_daily_schedule.ps1` | Independent daily task installation |
+| `Update Excel.cmd` | Manual weekly updater launcher |
+
+The TXT guides describe the original installed schedules, report layout and
+local file locations. Installers in this repository accept explicit paths for
+restoration; the running Desktop installation has not been reconfigured.
+
+## Tests
+
+```powershell
+node daily_runtime/test_cpr.mjs
+python test_scheduler.py
+python test_daily.py
+python test_daily_export.py
+```
+
+CPR checks cover reversed boundaries, zero/flat prices and exact classification
+cutoffs. Python tests also cover catch-up, holidays, week rollover, duplicate
+prevention, locked workbooks and full source-price reconciliation.
+
+The historical integration tests expect the validated 2–6 and 9 November 2026
+archives, the 2026 holiday calendar, and the original weekly JSON payload. These
+fixtures are intentionally not committed. Generate the 2–6 November cache/JSON
+using `update_weekly_ohlc.py --as-of 2026-11-10 --auto-holidays --json-only`;
+running the daily updater with the original start date also retrieves 9 November
+data when available. Offline tests need those files already cached.
+
+## Local outputs and state
+
+Reports are written to `outputs/`. Original archives, calendars, logs, completion
+receipts and machine-specific configs stay local and are excluded by `.gitignore`.
+Generated daily workbooks are regenerated from their validated daily records;
+keep personal edits in a separate analysis copy. Close workbooks during updates;
+an Excel lock preserves the existing file and leaves the update pending.

@@ -1,0 +1,45 @@
+NSE DAILY REPORTS
+
+Windows task: NSE Daily OHLC (separate from NSE Weekly OHLC).
+Checks each day at 16:30 IST and every 15 minutes through 22:00.
+Additional catch-up checks: daily at 09:00, and one minute after sign-in.
+The task requires the PC to be on and your Windows account signed in.
+It requests wake-from-sleep, subject to Windows/hardware power support.
+Three restart attempts at 15-minute intervals follow a failed run.
+
+The task checks the actual availability of BOTH official final NSE files,
+cash (CM) and derivatives (FO), before adding a date. Publication time is not
+assumed. Closures come from the NSE CM/FO holiday calendar. Weekend sessions
+can be entered in daily_config.json: additional_sessions; any closure override
+goes in additional_closures. No blank holiday or ordinary weekend sheets.
+
+One new workbook per Monday-Friday week in the SAME local outputs folder:
+NSE_FO_Daily_OHLC_YYYY-MM-DD_to_YYYY-MM-DD.xlsx
+One dated sheet per trading day, plus Sources containing URL/hash metadata.
+Daily columns: Stock Symbol, Daily Open, Daily High, Daily Low, Daily Close.
+Prices are INR cash EQ/F1, unadjusted. Each day's stock universe comes from
+that day's STF/STO derivatives records. Index contracts are excluded.
+
+Initial backfill starts on Monday 9 November 2026. All pending dates since
+then are checked on subsequent runs, including after shutdown or an outage.
+Successful dates are not duplicated. A new week creates a new workbook.
+Keep the workbook closed during scheduled updates; if Excel locks the file,
+the existing copy is preserved and the update stays pending for retry.
+
+The daily program regenerates its managed weekly workbook from its validated
+daily_data/weeks JSON records when adding a day. Do not add personal notes
+or manual edits to these generated workbooks: keep an analysis copy instead.
+
+Daily scripts/config/cache are independent. The Saturday task definition,
+weekly program/configuration and weekly report files are unchanged.
+
+Status: daily_last_run_status.json
+Log: logs\daily_update.log
+Daily prices/calendar/archive cache: daily_data
+Daily workbook builder: daily_runtime\build_daily.mjs
+Task backup: Daily Task Scheduler.xml
+
+To run manually, select NSE Daily OHLC in Windows Task Scheduler and Run.
+To stop daily updates, Disable NSE Daily OHLC. The Saturday task continues.
+Keep this folder and the installed Codex bundled Python/Node runtime available;
+Codex and Excel do not have to be open while the task runs.

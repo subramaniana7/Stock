@@ -1,0 +1,11 @@
+{
+  "task_name": "NSE Daily OHLC",
+  "first_date": "2026-11-09",
+  "timezone": "Asia/Kolkata",
+  "node_executable": "C:\\path\\to\\bundled\\node.exe",
+  "poll_start": "16:30",
+  "poll_end": "22:00",
+  "poll_minutes": 15,
+  "additional_sessions": [],
+  "additional_closures": []
+}

@@ -1,0 +1,38 @@
+# Local configuration and credentials
+daily_config.json
+schedule_config.json
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Market data, generated reports and local run state
+outputs/
+source_archives/
+calendars/
+daily_data/
+logs/
+backups/
+cpr_migration/
+daily_previews/
+*.xlsx
+*.csv
+*.zip
+*.png
+*.inspect.ndjson
+*.lock
+*.tmp
+*.pending
+*_last_run_status.json
+last_run_status.json
+schedule_state.json
+*Task Scheduler.xml
+*_before_*.xml
+
+# Installed dependencies and Python bytecode
+node_modules/
+__pycache__/
+*.py[cod]
+.venv/
+venv/
