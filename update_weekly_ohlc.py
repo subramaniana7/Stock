@@ -2,6 +2,7 @@
 import argparse, csv, datetime as dt, hashlib, io, json, math, pathlib, sys, time
 import urllib.request, zipfile
 from xml.sax.saxutils import escape
+from email_notifications import queue_report,flush_notifications
 
 BASE = pathlib.Path(__file__).resolve().parent
 HEADERS = ['Stock Symbol','Weekly Open','Weekly High','Weekly Low','Weekly Close']
@@ -175,6 +176,8 @@ def main():
         try: write_xlsx(temp,payload); temp.replace(final)
         finally:
             if temp.exists(): temp.unlink()
+        queue_report(BASE,'weekly:'+str(start),final,f'{start} to {end}','created')
+        flush_notifications(BASE)
         print(f'Saved {final} ({payload["count"]} stocks; {len(payload["daily"])} daily cash observations).')
     else: print(f'Validated {payload["count"]} stocks; {len(payload["daily"])} daily observations.')
 

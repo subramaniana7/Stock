@@ -129,3 +129,25 @@ receipts and machine-specific configs stay local and are excluded by `.gitignore
 Generated daily workbooks are regenerated from their validated daily records;
 keep personal edits in a separate analysis copy. Close workbooks during updates;
 an Excel lock preserves the existing file and leaves the update pending.
+
+## Email notifications
+
+`email_notifications.py` sends short plain-text messages after a weekly report is
+created or a new trading-day sheet is saved in a daily workbook. No attachment or
+report contents are sent. Duplicate checks use the report week/trading date.
+Email delivery failures keep the successful report intact and leave a durable
+outbox event for retry on a later scheduled run. SMTP timeouts or a crash between
+server acceptance and receipt recording can rarely cause a repeated message.
+
+Copy `email_config.example.json` to `email_config.json`, set sender and recipient,
+then run `setup_email.py` using the same signed-in Windows account as the tasks.
+It presents a masked local entry for a Gmail App Password, checks Gmail, sends a
+setup test message, and stores the password in Windows Credential Manager.
+Never paste credentials into chat or put them in source/config files. Gmail App
+Passwords require 2-Step Verification and may be unavailable for some account
+policies: https://support.google.com/mail/answer/185833
+
+Local `email_config.json`, setup status and `email_outbox/` are ignored by Git.
+Notification code does not change task schedules or prevent a successful report
+from being completed when email is unavailable. Run `python test_email_notifications.py`
+for notification retry, duplicate suppression, secure SMTP and no-attachment checks.

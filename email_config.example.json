@@ -1,0 +1,8 @@
+{
+  "enabled": true,
+  "sender": "you@gmail.com",
+  "recipient": "you@gmail.com",
+  "smtp_host": "smtp.gmail.com",
+  "smtp_port": 465,
+  "credential_target": "NSEStockReports:GmailSMTP"
+}

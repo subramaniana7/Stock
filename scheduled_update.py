@@ -1,6 +1,7 @@
 """Unattended weekly runner. Catch up every scheduled week since installation."""
 import argparse, contextlib, datetime as dt, hashlib, json, logging, logging.handlers
 import os, pathlib, subprocess, sys, zipfile
+from email_notifications import flush_notifications
 
 BASE=pathlib.Path(__file__).resolve().parent
 IST=dt.timezone(dt.timedelta(hours=5,minutes=30))
@@ -79,6 +80,7 @@ def main():
             if result.returncode: raise RuntimeError(f'Updater exited with code {result.returncode}')
         try:
             run_pending(BASE,config,now,invoke,logger)
+            flush_notifications(BASE,logger)
             atomic_json(BASE/'last_run_status.json',{'status':'success','at':now.isoformat(),'message':'All due weekly reports complete'})
             return 0
         except Exception as ex:

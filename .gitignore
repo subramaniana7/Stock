@@ -1,6 +1,9 @@
 # Local configuration and credentials
 daily_config.json
 schedule_config.json
+email_config.json
+email_setup_status.json
+email_outbox/
 .env
 .env.*
 !.env.example

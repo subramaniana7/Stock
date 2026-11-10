@@ -2,6 +2,7 @@
 import argparse, datetime as dt, hashlib, json, logging, logging.handlers, math
 import pathlib, shutil, subprocess, sys, zipfile, xml.etree.ElementTree as ET
 import update_weekly_ohlc as nse
+from email_notifications import queue_report,flush_notifications
 
 BASE=pathlib.Path(__file__).resolve().parent
 IST=dt.timezone(dt.timedelta(hours=5,minutes=30))
@@ -128,10 +129,13 @@ def run_updates(root,config,now,logger,offline=False,render_dir=None,collector=N
         if not payload['days']: continue
         if not new and workbook_valid(path,payload['days']): continue
         payload['calendar_sources']=calendar_sources
+        created=not path.exists()
         try:
             path=builder(root,config,payload,render_dir)
             atomic_json(store,payload)  # Commit completion only after the Excel file is installed.
             added.extend(new)
+            for date in new:
+                queue_report(root,'daily:'+date,path,date,'created' if created else 'updated with daily sheet',logger)
             logger.info('SAVED %s; added dates: %s',path.name,', '.join(new) or 'restored workbook')
         except Exception as ex:
             failures.extend(new or [str(d) for d in days]); logger.exception('Workbook pending: %s',ex)
@@ -162,6 +166,7 @@ def main():
         try:
             init_sources(BASE)
             status=run_updates(BASE,config,now,logger,args.offline,args.render_dir)
+            status['email_notifications']=flush_notifications(BASE,logger)
             atomic_json(BASE/'daily_last_run_status.json',status)
             if status['added_dates'] or status['pending_dates']: logger.info('%s',json.dumps(status))
             if sys.stdout: print(json.dumps(status,indent=2))
