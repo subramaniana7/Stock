@@ -1,15 +1,15 @@
 import fs from 'node:fs/promises';
 import { Workbook,SpreadsheetFile } from '@oai/artifact-tool';
-import {applyCPR,addLegend,verifyCPR} from './cpr.mjs';
+import {applyCPR,addLegend,verifyCPR,verifyTradingView} from './cpr.mjs';
 const job=JSON.parse(await fs.readFile(process.argv[2],'utf8')),p=job.payload;
 const w=Workbook.create();
 const output=w.worksheets.add('Weekly OHLC'),daily=w.worksheets.add('Daily Prices'),sources=w.worksheets.add('Sources and Method');
 output.getRange('A1:E1').values=[['Stock Symbol','Weekly Open','Weekly High','Weekly Low','Weekly Close']];
 output.getRange('A2').write(p.weekly.map(r=>[r[0]]));
 output.getRange(`B2:E${p.weekly.length+1}`).formulas=p.weekly.map(r=>r.slice(1));
-output.getRange('M1').values=[[`Week: ${p.start} to ${p.end} | INR per share`]];
-output.getRange('M2').values=[[`${p.count} F&O stocks | Unadjusted cash-market prices`]];
-output.getRange('M:M').format.columnWidth=70;
+output.getRange('N1').values=[[`Week: ${p.start} to ${p.end} | INR per share`]];
+output.getRange('N2').values=[[`${p.count} F&O stocks | Unadjusted cash-market prices`]];
+output.getRange('N:N').format.columnWidth=70;
 daily.getRange('A1:G1').values=[['Stock Symbol','Date','Open','High','Low','Close','F&O eligible that day']];
 daily.getRange('A2').write(p.daily.map(r=>[r[0],new Date(r[1]+'T00:00:00Z'),...r.slice(2)]));
 sources.getRange('A1').write(p.notes.map(r=>[...r,...Array(4-r.length).fill(null)]));
@@ -38,5 +38,6 @@ for(let i=0;i<got.length;i++)for(let j=0;j<5;j++){
  if(typeof expected==='number'?Math.abs(got[i][j]-expected)>1e-8:got[i][j]!==expected)throw Error(`Weekly OHLC mismatch ${i},${j}`);
 }
 verifyCPR(output,p.weekly.length+1);
+verifyTradingView(output,p.weekly.length+1);
 await (await SpreadsheetFile.exportXlsx(w)).save(job.output);
 console.log(`Verified ${got.length} weekly OHLC rows and CPR calculations`);

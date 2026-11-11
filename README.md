@@ -13,6 +13,10 @@ this checkout; publishing this repository does not modify its scheduled tasks.
   catch-up. One workbook per week, with a sheet per trading day.
 - Both include Pivot, normalized TC/BC, nonnegative CPR width, width percentage,
   colour-coded classification, filters and a CPR Guide sheet.
+- The final table column is **TradingView Symbol**, using `=A2&","` to produce
+  text such as `ASTRAL,` without an exchange prefix. It is included in the table,
+  so filtering and sorting keep it aligned with the stock symbol. Copy visible
+  cells from this column after filtering to prepare a comma-separated list.
 
 Prices are unadjusted NSE cash EQ/F1 prices in INR, not futures-contract prices.
 NSE's official final CM and FO UDiFF archives are validated before a date is
@@ -115,6 +119,7 @@ restoration; the running Desktop installation has not been reconfigured.
 
 ```powershell
 node daily_runtime/test_cpr.mjs
+node daily_runtime/test_tradingview.mjs
 python test_scheduler.py
 python test_daily.py
 python test_daily_export.py

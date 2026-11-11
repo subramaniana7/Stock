@@ -28,10 +28,20 @@ export function applyCPR(sheet,lastRow,tableName){
   sheet.getRange(`K2:K${lastRow}`).conditionalFormats.add('expression',{
    formula:`=$K2="${label}"`,format:{fill:color,font:{color:'#1F2937',bold:true}}});
  }
+ addTradingViewColumn(sheet,lastRow,tableName);
+}
+export function addTradingViewColumn(sheet,lastRow,tableName){
+ sheet.getRange('L1').values=[['TradingView Symbol']];
+ sheet.getRange('L2').formulas=[['=A2&","']];
+ sheet.getRange(`L2:L${lastRow}`).fillDown();
+ sheet.getRange(`L1:L${lastRow}`).format.font={name:'Arial',size:11};
+ sheet.getRange('L:L').format.columnWidth=24;
+ sheet.getRange('L1').format={fill:'#1F4E78',font:{bold:true,color:'#FFFFFF'},horizontalAlignment:'center'};
+ sheet.getRange(`L2:L${lastRow}`).setNumberFormat('General');
  const tables=sheet.tables.items;
  let name=tableName,style;
  for(const table of [...tables]){name=table.name;style=table.style;table.delete();}
- const table=sheet.tables.add(`A1:K${lastRow}`,true,name);
+ const table=sheet.tables.add(`A1:L${lastRow}`,true,name);
  if(style) table.style=style;
  table.showFilterButton=true;
 }
@@ -72,4 +82,12 @@ export function verifyCPR(sheet,lastRow){
   }
  }
  return input.length;
+}
+export function verifyTradingView(sheet,lastRow){
+ const symbols=sheet.getRange(`A2:A${lastRow}`).values;
+ const actual=sheet.getRange(`L2:L${lastRow}`).values;
+ for(let i=0;i<symbols.length;i++){
+  if(actual[i][0]!==symbols[i][0]+',') throw Error(`TradingView symbol mismatch ${sheet.name}!L${i+2}`);
+ }
+ return symbols.length;
 }

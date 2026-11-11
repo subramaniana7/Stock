@@ -1,7 +1,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { Workbook, SpreadsheetFile } from '@oai/artifact-tool';
-import { applyCPR,addLegend,verifyCPR } from './cpr.mjs';
+import { applyCPR,addLegend,verifyCPR,verifyTradingView } from './cpr.mjs';
 const job=JSON.parse(await fs.readFile(process.argv[2],'utf8'));
 const p=job.payload;
 const w=Workbook.create();
@@ -13,14 +13,14 @@ for(const date of dates){
  s.showGridLines=false; s.tabColor='#1F4E78';
  s.getRange('A1:E1').values=[['Stock Symbol','Daily Open','Daily High','Daily Low','Daily Close']];
  s.getRange('A2').write(d.rows);
- s.getRange('M1').values=[[`Trading date: ${date} | INR per share`]];
- s.getRange('M2').values=[[`${d.rows.length} F&O stocks | Unadjusted cash-market prices`]];
+ s.getRange('N1').values=[[`Trading date: ${date} | INR per share`]];
+ s.getRange('N2').values=[[`${d.rows.length} F&O stocks | Unadjusted cash-market prices`]];
  s.getRange(`A1:G${d.rows.length+1}`).format.font={name:'Arial',size:11};
  s.getRange(`A1:E${d.rows.length+1}`).format.rowHeight=21;
  s.getRange('A:A').format.columnWidth=24;
  s.getRange('B:E').format.columnWidth=19;
- s.getRange('L:L').format.columnWidth=3;
- s.getRange('M:M').format.columnWidth=70;
+ s.getRange('M:M').format.columnWidth=3;
+ s.getRange('N:N').format.columnWidth=70;
  s.getRange('A1:E1').format={fill:'#1F4E78',font:{bold:true,color:'#FFFFFF'},horizontalAlignment:'center'};
  s.getRange(`B2:E${d.rows.length+1}`).setNumberFormat('#,##0.00');
  s.freezePanes.freezeRows(1);
@@ -52,13 +52,14 @@ for(const date of dates){
  const actual=w.worksheets.getItem(nameOf(date)).getRange(`A2:E${rows.length+1}`).values;
  if(JSON.stringify(actual)!==JSON.stringify(rows)) throw Error(`Daily price verification failed for ${date}`);
  verifyCPR(w.worksheets.getItem(nameOf(date)),rows.length+1);
+ verifyTradingView(w.worksheets.getItem(nameOf(date)),rows.length+1);
 }
 const errors=await w.inspect({kind:'match',searchTerm:'#REF!|#DIV/0!|#VALUE!|#NAME\\?|#N/A|#NUM!',options:{useRegex:true,maxResults:20},maxChars:2000});
 if(/"cell"/.test(errors.ndjson)) throw Error(errors.ndjson);
 if(job.render_dir){
  await fs.mkdir(job.render_dir,{recursive:true});
  for(const date of dates){
-  const preview=await w.render({sheetName:nameOf(date),range:'A1:K12',scale:1.2,format:'png'});
+  const preview=await w.render({sheetName:nameOf(date),range:'A1:L12',scale:1.2,format:'png'});
   await fs.writeFile(path.join(job.render_dir,date+'.png'),new Uint8Array(await preview.arrayBuffer()));
  }
  const preview=await w.render({sheetName:'Sources',range:'A1:B6',scale:1.1,format:'png'});
