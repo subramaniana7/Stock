@@ -21,7 +21,7 @@ for(const s of [output,daily,sources]){
 }
 output.getRange('A1:E1').format={fill:'#1F4E78',font:{bold:true,color:'#FFFFFF'},horizontalAlignment:'center'};
 output.getRange(`B2:E${p.weekly.length+1}`).setNumberFormat('#,##0.00');
-applyCPR(output,p.weekly.length+1,'WeeklyPrices');
+applyCPR(output,p.weekly.length+1,'WeeklyPrices','weekly');
 daily.getRange('A1:G1').format={fill:'#1F4E78',font:{bold:true,color:'#FFFFFF'}};
 daily.getRange(`B2:B${p.daily.length+1}`).setNumberFormat('dd-mmm-yyyy');
 daily.getRange(`C2:F${p.daily.length+1}`).setNumberFormat('#,##0.00');
@@ -37,7 +37,7 @@ for(let i=0;i<got.length;i++)for(let j=0;j<5;j++){
  const expected=p.calculated[i][j];
  if(typeof expected==='number'?Math.abs(got[i][j]-expected)>1e-8:got[i][j]!==expected)throw Error(`Weekly OHLC mismatch ${i},${j}`);
 }
-verifyCPR(output,p.weekly.length+1);
+verifyCPR(output,p.weekly.length+1,'weekly');
 verifyTradingView(output,p.weekly.length+1);
 await (await SpreadsheetFile.exportXlsx(w)).save(job.output);
 console.log(`Verified ${got.length} weekly OHLC rows and CPR calculations`);

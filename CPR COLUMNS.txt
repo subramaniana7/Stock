@@ -5,18 +5,23 @@ G TC = MAX((High + Low) / 2, 2 * Pivot - (High + Low) / 2)
 H BC = MIN((High + Low) / 2, 2 * Pivot - (High + Low) / 2)
 I TC-BC = TC - BC
 J CPR Width % = (TC - BC) / Pivot * 100; blank for zero Pivot
-K CPR Classification = Very Narrow / Narrow / Medium / Above Medium
+K CPR Classification = period-specific bands below
 
 TC is always the higher boundary, so width is nonnegative. Classification
-uses full precision, not the displayed rounded values. Pivot displays whole
-rupees; TC/BC/width/width percentage display two decimals.
+uses CPR Width % rounded to three decimals. Underlying CPR calculations
+retain full precision. Pivot displays whole rupees; TC/BC/width display two
+decimals; CPR Width % displays three decimals.
 J stores percentage POINTS: 0.05 means 0.05%, not 5%. It uses an ordinary
 number format because the formula already multiplies by 100.
 
-Very Narrow: below 0.05% (light green)
-Narrow: 0.05% to below 0.10% (light blue)
-Medium: 0.10% through 0.20% (light amber)
-Above Medium: above 0.20% (light grey)
+Very Narrow: 0.000% through 0.050% (light green)
+Narrow: 0.051% through 0.100% (light blue)
+Medium: 0.101% through 0.200% (light amber)
+Daily Above Medium: 0.201% and above (light grey)
+Weekly Medium 1: 0.201% through 0.500% (light orange)
+Weekly Medium 2: 0.501% through 0.800% (light purple)
+Weekly Above Medium: 0.801% and above (light grey)
+All endpoints are inclusive after rounding to three decimals.
 
 Daily: use that completed session's HLC, for the next trading session.
 Weekly: use that completed week's HLC, for the following week.

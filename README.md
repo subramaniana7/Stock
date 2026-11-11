@@ -23,15 +23,19 @@ NSE's official final CM and FO UDiFF archives are validated before a date is
 processed. Holidays use NSE's official CM/FO calendar; a failed price download is
 never silently treated as a holiday. Pending dates/weeks are retained for retry.
 
-| CPR classification | Width percentage |
-| --- | --- |
-| Very Narrow | Below 0.05% |
-| Narrow | 0.05% to below 0.10% |
-| Medium | 0.10% through 0.20% |
-| Above Medium | Above 0.20% |
+| CPR classification | Daily width % | Weekly width % |
+| --- | --- | --- |
+| Very Narrow | 0.000–0.050 | 0.000–0.050 |
+| Narrow | 0.051–0.100 | 0.051–0.100 |
+| Medium | 0.101–0.200 | 0.101–0.200 |
+| Medium 1 | — | 0.201–0.500 |
+| Medium 2 | — | 0.501–0.800 |
+| Above Medium | 0.201 and above | 0.801 and above |
 
-Column J stores percentage points: `0.05` means `0.05%`. Classification uses full
-precision. TC is always the higher boundary. These categories describe width;
+Column J stores percentage points: `0.05` means `0.05%`. Classification uses the
+three-decimal rounded width, matching the three-decimal display in column J;
+the underlying CPR calculations retain full precision. All table endpoints are
+inclusive. TC is always the higher boundary. These categories describe width;
 they do not establish breakout probabilities.
 
 ## Requirements and restore

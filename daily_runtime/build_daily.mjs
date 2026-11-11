@@ -64,7 +64,7 @@ if(job.render_dir){
  }
  const preview=await w.render({sheetName:'Sources',range:'A1:B6',scale:1.1,format:'png'});
  await fs.writeFile(path.join(job.render_dir,'sources.png'),new Uint8Array(await preview.arrayBuffer()));
- const guide=await w.render({sheetName:'CPR Guide',range:'A1:C5',scale:1,format:'png'});
+ const guide=await w.render({sheetName:'CPR Guide',range:'A1:C7',scale:1,format:'png'});
  await fs.writeFile(path.join(job.render_dir,'cpr-guide.png'),new Uint8Array(await guide.arrayBuffer()));
 }
 await (await SpreadsheetFile.exportXlsx(w)).save(job.output);
