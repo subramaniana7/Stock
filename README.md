@@ -84,6 +84,15 @@ are requested, subject to hardware/Windows support. Missed starts and sign-in
 checks catch up; failures retry three times at 15-minute intervals. Codex and
 Excel do not need to remain open, but the bundled runtime must remain installed.
 
+Use the stable `%USERPROFILE%\.cache\codex-runtimes\codex-primary-runtime\dependencies`
+runtime paths for unattended jobs when available. Version-numbered paths under
+`Program Files\WindowsApps` can disappear when the Codex runtime updates.
+If the daily task reports `0x80070002` (file not found), `repair_runtime.ps1`
+updates its Python action, the shared Node config and the workbook-library
+junction to the stable cache. It preserves daily scheduling settings and leaves
+the existing weekly task unchanged. Run it from the installation directory, or
+pass `-ReportFolder` explicitly; existing config/task definitions are backed up.
+
 ## Files
 
 | File | Purpose |
