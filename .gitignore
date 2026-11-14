@@ -4,6 +4,9 @@ schedule_config.json
 monthly_config.json
 monthly_data/
 monthly_state.json
+nifty500_config.json
+nifty500_data/
+nifty500_*_state.json
 email_config.json
 email_setup_status.json
 email_outbox/

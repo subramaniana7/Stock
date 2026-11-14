@@ -166,6 +166,21 @@ Generated daily workbooks are regenerated from their validated daily records;
 keep personal edits in a separate analysis copy. Close workbooks during updates;
 an Excel lock preserves the existing file and leaves the update pending.
 
+## Nifty 500 reports
+
+`nifty500_update.py --kind weekly` and `--kind monthly` create separate `NSE500`
+reports in the existing month folders. Copy `nifty500_config.example.json` to
+`nifty500_config.json`; install the two independent tasks with
+`install_nifty500_schedule.ps1 -Kind weekly` / `-Kind monthly`. The original F&O
+and daily workflows are not changed. See `NSE500 SCHEDULE.txt` for details.
+
+The universe is the current official Nifty 500 CSV at generation time, recorded
+with URL/date/checksum. All official entries are retained, including temporary
+non-traded index placeholders. Prices or periods without complete coverage are
+shown as `n.a.`/`Unavailable`, with a Coverage sheet; valid aggregate prices use
+regular EQ/BE/BZ/RR cash observations matched by ISIN or symbol. Each report also
+includes the downloaded Constituents, raw Daily Prices and CPR Guide.
+
 ## Monthly reports
 
 Monthly reporting is independent: copy `monthly_config.example.json` to
