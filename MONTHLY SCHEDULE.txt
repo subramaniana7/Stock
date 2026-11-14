@@ -1,0 +1,50 @@
+NSE MONTHLY OHLC
+
+Windows task: NSE Monthly OHLC
+Schedule: the 1st of every month at 09:00 India Standard Time.
+First future scheduled run: 1 December 2026, producing November 2026.
+Initial backfill: October 2026, produced immediately during setup.
+
+Each file is separate: outputs\NSE_FO_Monthly_OHLC_YYYY-MM.xlsx
+Sheets: Monthly OHLC, Daily Prices, Sources and Method, CPR Guide.
+Columns match weekly reports, including the weekly six CPR bands,
+three-decimal classification, colours and comma-formatted TradingView symbols.
+
+Monthly Open: first selected trading session's open.
+Monthly High: maximum daily high across the selected sessions.
+Monthly Low: minimum daily low across the selected sessions.
+Monthly Close: final selected trading session's close.
+Universe: union of stock underlyings with STF/STO contracts during the month.
+Prices: cash EQ/F1, INR per share, unadjusted. Index contracts are excluded.
+Every stock requires valid cash prices across all selected sessions.
+Official ISIN matches consolidate symbol renames into the latest cash symbol.
+The supporting Daily Prices sheet records each original Source Cash Symbol;
+Sources and Method documents any rename mapping.
+Missing or invalid data prevents partial workbook export and remains pending.
+
+The monthly task uses separate cache, lock, completion receipts and logs.
+It does not change daily/weekly schedules or their data files.
+Catch-up: run after a missed start and one minute after Windows sign-in.
+Retries: three attempts, 15 minutes apart. Pending months retry on later runs.
+PC must be on and the configured Windows user signed in. The task requests
+wake-from-sleep, subject to Windows/hardware support. Codex/Excel need not be open.
+
+Email: the existing sender sends a plain-text notification after successful
+monthly creation; no attachment. Email failures are queued for later retry.
+
+Configuration: monthly_config.json. first_month controls earliest backfill.
+additional_sessions lists confirmed special trading dates; additional_closures
+lists confirmed closures beyond the official annual calendar. The known
+8 November 2026 Muhurat session is included. Future special sessions must be
+added when NSE announces them. Weekday holidays use the official CM/FO calendar.
+
+Status: monthly_last_run_status.json
+Receipts: monthly_state.json
+Cache and source payloads: monthly_data
+Log: logs\monthly_update.log
+Task backup: Monthly Task Scheduler.xml
+
+Manual generation: python monthly_update.py --month 2026-10
+Offline regeneration: add --offline after all source files are cached.
+Source download/validation without workbook/email: add --fetch-only.
+To disable only monthly updates, disable NSE Monthly OHLC in Task Scheduler.

@@ -1,0 +1,6 @@
+{
+  "task_name": "NSE Monthly OHLC",
+  "first_month": "2026-10",
+  "additional_sessions": ["2026-11-08"],
+  "additional_closures": []
+}

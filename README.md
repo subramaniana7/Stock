@@ -11,6 +11,10 @@ this checkout; publishing this repository does not modify its scheduled tasks.
 - **Daily:** each session's cash-market OHLC for that day's F&O stock universe.
   Checks every 15 minutes from 16:30 through 22:00 IST, with 09:00 and sign-in
   catch-up. One workbook per week, with a sheet per trading day.
+- **Monthly:** completed calendar-month OHLC, produced at 09:00 IST on the first
+  of each month, including when that date is a weekend or holiday. A separate
+  monthly workbook includes Monthly OHLC, Daily Prices, Sources and Method, and
+  CPR Guide. Uses the weekly six-category CPR bands and TradingView symbols.
 - Both include Pivot, normalized TC/BC, nonnegative CPR width, width percentage,
   colour-coded classification, filters and a CPR Guide sheet.
 - The final table column is **TradingView Symbol**, using `=A2&","` to produce
@@ -147,6 +151,21 @@ receipts and machine-specific configs stay local and are excluded by `.gitignore
 Generated daily workbooks are regenerated from their validated daily records;
 keep personal edits in a separate analysis copy. Close workbooks during updates;
 an Excel lock preserves the existing file and leaves the update pending.
+
+## Monthly reports
+
+Monthly reporting is independent: copy `monthly_config.example.json` to
+`monthly_config.json`, review its `first_month` and special-session overrides,
+then run `monthly_update.py`. Install with `install_monthly_schedule.ps1`
+using `-ReportFolder` if needed. The first-of-month 09:00 task and sign-in
+catch-up track each pending calendar month separately. `--month YYYY-MM`
+generates a selected completed month; `--fetch-only` only validates/caches data.
+Monthly notifications use the same secure sender and outbox as the other jobs.
+Monthly aggregation consolidates symbol renames only when the official cash
+files confirm the same ISIN. It uses the latest cash symbol for the stock row
+and retains the original daily cash symbols and mapping notes for traceability.
+The known 8 November 2026 Muhurat session is explicitly configured; add future
+announced weekend sessions to `additional_sessions`. See `MONTHLY SCHEDULE.txt`.
 
 ## Email notifications
 
