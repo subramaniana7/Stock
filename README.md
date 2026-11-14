@@ -174,12 +174,17 @@ reports in the existing month folders. Copy `nifty500_config.example.json` to
 `install_nifty500_schedule.ps1 -Kind weekly` / `-Kind monthly`. The original F&O
 and daily workflows are not changed. See `NSE500 SCHEDULE.txt` for details.
 
-The universe is the current official Nifty 500 CSV at generation time, recorded
-with URL/date/checksum. All official entries are retained, including temporary
-non-traded index placeholders. Prices or periods without complete coverage are
+The starting universe is the current official Nifty 500 CSV at generation time,
+recorded with URL/date/checksum. Stocks appearing as STF/STO underlyings during
+any report session are excluded, using symbol and cash-ISIN aliases to handle
+renames. This matches the report period of the separate F&O workbooks. All
+remaining entries are retained, including temporary non-traded placeholders.
+Prices or periods without complete coverage are
 shown as `n.a.`/`Unavailable`, with a Coverage sheet; valid aggregate prices use
 regular EQ/BE/BZ/RR cash observations matched by ISIN or symbol. Each report also
-includes the downloaded Constituents, raw Daily Prices and CPR Guide.
+includes the retained Constituents, raw Daily Prices and CPR Guide. The full
+downloaded index snapshot remains in the local cache. Policy-versioned receipts
+regenerate older unfiltered NSE500 reports once, without changing their names.
 
 ## Monthly reports
 

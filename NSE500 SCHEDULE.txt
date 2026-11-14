@@ -13,16 +13,25 @@ outputs\2026-10\NSE500 Monthly Oct 2026.xlsx
 Weekly reports belong to the month of Monday. Monthly reports to their month.
 The next automatic weekly run is 21 November 2026; monthly 1 December 2026.
 
-Universe: the CURRENT official Nifty 500 constituent CSV at generation time.
+Starting universe: the CURRENT official Nifty 500 constituent CSV at generation time.
 This is intentionally not point-in-time historical index membership.
 Every report records list URL, checksum and download timestamp and includes
-the complete Constituent sheet. The official list may contain more than 500
-entries after corporate actions; all official entries are retained.
+the retained Constituents sheet. The official list may contain more than 500
+entries after corporate actions.
+
+EXCLUDE F&O STOCKS: remove every index constituent appearing as a stock
+underlying (STF/STO) in any official F&O file during that report's sessions.
+Match by symbol and cash ISIN aliases, so renamed stocks are excluded too.
+This matches the period covered by the separate F&O reports. Retained symbols
+are used consistently in the main report, Daily Prices, Coverage and Constituents.
+The full official index snapshot remains in nifty500_data, outside the workbook.
+Sources and Method records exclusion counts and all CM/FO source checksums.
+Versioned receipts regenerate older unfiltered NSE500 reports once.
 
 The 14 November 2026 list contains 501 entries, including DUMMYHEG. That index
 placeholder has no cash-market observations for the initial report periods.
 It remains visible with n.a. prices and Unavailable classification. No values
-are invented and no constituents are silently dropped. Coverage documents
+are invented. Coverage documents the retained non-F&O stocks and
 every stock's available versus expected sessions. Incomplete period coverage
 also produces n.a. aggregate prices until complete source coverage exists.
 
@@ -40,7 +49,7 @@ leaves the report pending instead of silently using a stale current list.
 Offline mode explicitly uses the recorded validated snapshot and cached data.
 Current snapshots remain in nifty500_data for auditability.
 
-New reports use the existing secure email sender, with no attachments.
+New or policy-updated reports use the existing secure email sender, with no attachments.
 Completed period receipts and event IDs prevent normal duplicate reports/email.
 Separate weekly/monthly locks, state files, logs and caches are used.
 

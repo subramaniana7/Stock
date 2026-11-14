@@ -10,6 +10,7 @@ BASE=pathlib.Path(__file__).resolve().parent
 IST=dt.timezone(dt.timedelta(hours=5,minutes=30))
 URLS=['https://www.niftyindices.com/IndexConstituent/ind_nifty500list.csv','https://nsearchives.nseindia.com/content/indices/ind_nifty500list.csv']
 DEFAULT_CONFIG={'first_week':'2026-11-09','first_month':'2026-10','additional_sessions':['2026-11-08'],'additional_closures':[]}
+UNIVERSE_POLICY='current-nifty500-excluding-period-fo-v1'
 
 def atomic_json(path,value):
     path.parent.mkdir(parents=True,exist_ok=True);temp=path.with_name(path.name+'.'+uuid.uuid4().hex+'.tmp')
@@ -69,7 +70,7 @@ def init_cache(root):
             source=parent/name
             if not source.is_dir() or source==dest:continue
             for item in source.iterdir():
-                allowed=item.suffix=='.json' if name=='calendars' else '_CM_' in item.name and item.suffix=='.zip'
+                allowed=item.suffix=='.json' if name=='calendars' else any(s in item.name for s in ['_CM_','_FO_']) and item.suffix=='.zip'
                 if item.is_file() and allowed and not (dest/item.name).exists():shutil.copyfile(item,dest/item.name)
 
 def report_path(root,kind,start):
@@ -98,6 +99,18 @@ def select_cash(member,rows):
         raise ValueError('Invalid cash OHLC for '+member['Symbol'])
     return [*values,row['TckrSymb'],row['SctySrs']]
 
+def exclude_fo(members,cash,universes):
+    """Match the separate period F&O reports, including ISIN-confirmed aliases."""
+    symbols=set().union(*universes.values())
+    isins={r['ISIN'] for rows in cash.values() for r in rows
+           if r['SsnId']=='F1' and r['SctySrs'] in {'EQ','BE','BZ','RR'}
+           and r['TckrSymb'] in symbols and r.get('ISIN')}
+    aliases={r['TckrSymb'] for rows in cash.values() for r in rows
+             if r['SsnId']=='F1' and r.get('ISIN') in isins}
+    excluded=[m for m in members if m['Symbol'] in symbols|aliases or m['ISIN Code'] in isins]
+    excluded_symbols={m['Symbol'] for m in excluded}
+    return [m for m in members if m['Symbol'] not in excluded_symbols],excluded
+
 def aggregate(kind,start,days,members,info,cash,sources,calendar_info):
     daily=[];rows=[];calculated=[];coverage=[]
     for member in members:
@@ -116,10 +129,10 @@ def aggregate(kind,start,days,members,info,cash,sources,calendar_info):
         else:rows.append([symbol,'n.a.','n.a.','n.a.','n.a.']);calculated.append([symbol,None,None,None,None])
     end=start+dt.timedelta(days=4) if kind=='weekly' else next_month(start)-dt.timedelta(days=1)
     notes=[['Report',f'NSE500 {kind}: {start} to {end}'],['Prices','Unadjusted NSE cash-market OHLC, INR per share'],
-        ['Universe',f'CURRENT official Nifty 500 list: {len(members)} entries; membership is not historical'],
+        ['Universe',f'CURRENT official Nifty 500 list, excluding period F&O stocks: {len(members)} retained entries; membership is not historical'],
         ['Constituents fetched','IST '+info['downloaded_at']],['Constituent source',info['source']],['Constituent SHA-256',info['sha256']],
         ['Sessions',', '.join(str(d) for d in days)],['Cash matching','ISIN preferred; symbol fallback; EQ, BE, BZ or RR regular-series records; original symbols/series retained'],
-        ['Unavailable data','All index entries retained. Missing or incomplete-period prices are n.a.; see Coverage. No prices are invented.'],
+        ['Unavailable data','All non-F&O index entries retained. Missing or incomplete-period prices are n.a.; see Coverage. No prices are invented.'],
         ['Holiday source',calendar_info['source']],['Method','First session open; maximum high; minimum low; final session close'],[],
         ['Date','Segment','Official cash-source URL','SHA-256'],*sources]
     return {'kind':kind,'start':str(start),'end':str(end),'count':len(members),'rows':rows,'calculated':calculated,'daily':daily,
@@ -134,10 +147,21 @@ def prepare(root,kind,start,config,now,logger,offline=False):
     if kind=='monthly':days=session_dates(start,holidays,[dt.date.fromisoformat(d) for d in config.get('additional_sessions',[])],[dt.date.fromisoformat(d) for d in config.get('additional_closures',[])])
     else:days=[start+dt.timedelta(days=i) for i in range(5) if start+dt.timedelta(days=i) not in holidays and str(start+dt.timedelta(days=i)) not in config.get('additional_closures',[])]
     if not days:raise ValueError('No sessions selected')
-    with concurrent.futures.ThreadPoolExecutor(max_workers=3) as pool:data=list(pool.map(lambda day:(day,*nse.archive(day,'CM',offline)),days))
-    cash={day:observations for day,observations,_ in data};sources=[source for _,_,source in data]
-    payload=aggregate(kind,start,days,members,info,cash,sources,calendar_info)
-    logger.info('Validated %s: %s members, %s sessions, %s unavailable',kind,len(members),len(days),sum(r[1]!='Complete' for r in payload['coverage']))
+    def fetch(day):
+        cm,cm_source=nse.archive(day,'CM',offline);fo,fo_source=nse.archive(day,'FO',offline)
+        symbols={r['TckrSymb'].strip() for r in fo if r['FinInstrmTp'] in {'STF','STO'}}
+        if len(symbols)<100:raise ValueError(f'Unexpectedly small F&O exclusion universe on {day}: {len(symbols)}')
+        return day,cm,symbols,[cm_source,fo_source]
+    with concurrent.futures.ThreadPoolExecutor(max_workers=3) as pool:data=list(pool.map(fetch,days))
+    cash={day:observations for day,observations,_,_ in data};universes={day:symbols for day,_,symbols,_ in data}
+    sources=[source for _,_,_,day_sources in data for source in day_sources]
+    retained,excluded=exclude_fo(members,cash,universes)
+    if not retained:raise ValueError('No non-F&O Nifty 500 constituents remain')
+    payload=aggregate(kind,start,days,retained,info,cash,sources,calendar_info)
+    payload.update(universe_policy=UNIVERSE_POLICY,original_count=len(members),excluded_count=len(excluded))
+    payload['notes'].extend([[],['F&O exclusion',f'{len(excluded)} of {len(members)} current index entries excluded; {len(retained)} retained'],
+        ['F&O matching','Union of STF/STO stock underlyings across report sessions, matched by symbol and cash ISIN aliases; same period as separate F&O reports']])
+    logger.info('Validated %s: %s retained, %s F&O excluded, %s sessions, %s unavailable',kind,len(retained),len(excluded),len(days),sum(r[1]!='Complete' for r in payload['coverage']))
     return payload
 
 def export(root,payload,render_dir=None):
@@ -160,13 +184,13 @@ def run(root,kind,starts,config,now,logger,offline=False,render_dir=None):
     saved=[];pending=[]
     for start in starts:
         key=str(start) if kind=='weekly' else start.strftime('%Y-%m');path=report_path(root,kind,start);receipt=state['completed'].get(key)
-        if receipt and path.exists() and hashlib.sha256(path.read_bytes()).hexdigest()==receipt['sha256']:continue
+        if receipt and receipt.get('universe_policy')==UNIVERSE_POLICY and path.exists() and hashlib.sha256(path.read_bytes()).hexdigest()==receipt['sha256']:continue
         try:
             payload=prepare(root,kind,start,config,now,logger,offline)
             atomic_json(root/'nifty500_data'/'reports'/f'{kind}_{key}.json',payload)
             path=export(root,payload,render_dir)
-            state['completed'][key]={'file':path.relative_to(root/'outputs').as_posix(),'sha256':hashlib.sha256(path.read_bytes()).hexdigest(),'completed_at':now.isoformat(),'constituent_sha256':payload['constituents']['sha256']}
-            atomic_json(state_path,state);queue_report(root,'nifty500:'+kind+':'+key,path,key,'created',logger);saved.append(key)
+            state['completed'][key]={'file':path.relative_to(root/'outputs').as_posix(),'sha256':hashlib.sha256(path.read_bytes()).hexdigest(),'completed_at':now.isoformat(),'constituent_sha256':payload['constituents']['sha256'],'universe_policy':UNIVERSE_POLICY}
+            atomic_json(state_path,state);queue_report(root,'nifty500:'+kind+':'+key+':'+UNIVERSE_POLICY,path,key,'updated' if receipt else 'created',logger);saved.append(key)
         except Exception as ex:
             pending.append(key);logger.exception('Nifty 500 report pending: %s',ex)
             if sys.stderr:print(str(ex),file=sys.stderr)

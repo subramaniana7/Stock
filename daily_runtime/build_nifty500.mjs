@@ -8,8 +8,8 @@ const output=w.worksheets.add('NSE500 '+label),daily=w.worksheets.add('Daily Pri
 output.getRange('A1:E1').values=[['Stock Symbol',label+' Open',label+' High',label+' Low',label+' Close']];
 output.getRange('A2').write(p.rows.map(r=>[r[0]]));
 output.getRange(`B2:E${p.count+1}`).formulas=p.rows.map(r=>r.slice(1).map(x=>x.startsWith('=')?x:'=""'));
-output.getRange('N1').values=[[`Nifty 500 current list | ${p.start} to ${p.end} | INR`]];
-output.getRange('N2').values=[[`${p.count} index entries; list downloaded ${p.constituents.downloaded_at.slice(0,10)}`]];
+output.getRange('N1').values=[[`Nifty 500 excluding F&O | ${p.start} to ${p.end} | INR`]];
+output.getRange('N2').values=[[`${p.count} retained; ${p.excluded_count} F&O excluded from ${p.original_count}; list downloaded ${p.constituents.downloaded_at.slice(0,10)}`]];
 daily.getRange('A1:H1').values=[['Stock Symbol','Date','Open','High','Low','Close','Source Cash Symbol','Source Cash Series']];
 daily.getRange('A2').write(p.daily.map(r=>[r[0],new Date(r[1]+'T00:00:00Z'),...r.slice(2)]));
 coverage.getRange('A1:G1').values=[['Stock Symbol','Coverage status','Available sessions','Expected sessions','First observation','Last observation','Constituent ISIN']];
@@ -53,6 +53,8 @@ for(let i=0;i<p.count;i++){
 verifyTradingView(output,p.count+1);
 if(job.render_dir){
  await fs.mkdir(job.render_dir,{recursive:true});
+ // Initialize text/layout metrics before saving the review images.
+ await w.render({sheetName:output.name,range:'A1:L12',scale:1,format:'png'});
  for(const [s,range] of [[output,'A1:L12'],[daily,'A1:H12'],[coverage,'A1:G12'],[members,'A1:E12'],[sources,'A1:B11'],[guide,'A1:C7']]){
   const im=await w.render({sheetName:s.name,range,scale:1,format:'png'});await fs.writeFile(path.join(job.render_dir,s.name.replaceAll(' ','_')+'.png'),new Uint8Array(await im.arrayBuffer()));
  }

@@ -2,6 +2,14 @@ import datetime as dt,unittest
 import nifty500_update as n
 
 class Nifty500Tests(unittest.TestCase):
+    def test_excludes_period_union_and_isin_aliases_but_keeps_non_fo(self):
+        members=[{'Symbol':'NEW','ISIN Code':'SAME'},{'Symbol':'OTHER','ISIN Code':'OTHERISIN'},
+                 {'Symbol':'DAYONE','ISIN Code':'DAYONEISIN'},{'Symbol':'DUMMY','ISIN Code':'DUMMYISIN'}]
+        cash={1:[{'SsnId':'F1','SctySrs':'EQ','TckrSymb':'OLD','ISIN':'SAME'}],
+              2:[{'SsnId':'F1','SctySrs':'EQ','TckrSymb':'NEW','ISIN':'SAME'}]}
+        kept,removed=n.exclude_fo(members,cash,{1:{'OLD','DAYONE'},2:{'OLD'}})
+        self.assertEqual([m['Symbol'] for m in kept],['OTHER','DUMMY'])
+        self.assertEqual([m['Symbol'] for m in removed],['NEW','DAYONE'])
     def test_dates_names_and_rollover(self):
         root=n.pathlib.Path('reports');self.assertEqual(n.report_path(root,'weekly',dt.date(2026,11,9)).name,'NSE500 Weekly Nov 9-13 2026.xlsx')
         self.assertEqual(n.report_path(root,'monthly',dt.date(2026,10,1)).name,'NSE500 Monthly Oct 2026.xlsx')
