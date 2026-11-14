@@ -35,7 +35,7 @@ class MonthlyTests(unittest.TestCase):
     def test_successful_month_is_not_recreated(self):
         with tempfile.TemporaryDirectory() as folder:
             root=pathlib.Path(folder);(root/'outputs').mkdir();start=dt.date(2026,10,1)
-            path=m.report_path(root,start);path.write_bytes(b'previously verified monthly workbook')
+            path=m.report_path(root,start);path.parent.mkdir(parents=True,exist_ok=True);path.write_bytes(b'previously verified monthly workbook')
             m.atomic_json(root/'monthly_state.json',{'completed':{'2026-10':{'sha256':m.hashlib.sha256(path.read_bytes()).hexdigest()}}})
             with patch.object(m,'prepare_month',side_effect=AssertionError('Completed month downloaded again')):
                 result=m.run_months(root,[start],{},dt.datetime(2026,11,14,tzinfo=m.IST),logging.getLogger('monthly-test'))

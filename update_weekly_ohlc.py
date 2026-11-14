@@ -3,6 +3,7 @@ import argparse, csv, datetime as dt, hashlib, io, json, math, pathlib, sys, tim
 import urllib.request, zipfile
 from xml.sax.saxutils import escape
 from email_notifications import queue_report,flush_notifications
+from report_paths import weekly_path
 
 BASE = pathlib.Path(__file__).resolve().parent
 HEADERS = ['Stock Symbol','Weekly Open','Weekly High','Weekly Low','Weekly Close']
@@ -168,11 +169,12 @@ def main():
     for info in calendar_sources:
         payload['notes'].append(['Holiday calendar',str(info['year']),info['source'],'Retrieved '+info['retrieved_at']])
     if args.holiday: payload['notes'].append(['Excluded closures',', '.join(str(d) for d in sorted(set(args.holiday)))])
-    out=args.output_dir or BASE/'outputs'; out.mkdir(parents=True,exist_ok=True)
-    stem=f'NSE_FO_Weekly_OHLC_{start}_{end}'
+    final=weekly_path(BASE,start,args.output_dir)
+    out=final.parent;out.mkdir(parents=True,exist_ok=True)
+    stem=final.stem
     (out/(stem+'.json')).write_text(json.dumps(payload,indent=2),encoding='utf-8')
     if not args.json_only:
-        temp=out/(stem+'.tmp.xlsx'); final=out/(stem+'.xlsx')
+        temp=out/(stem+'.tmp.xlsx')
         try: write_xlsx(temp,payload); temp.replace(final)
         finally:
             if temp.exists(): temp.unlink()

@@ -3,6 +3,7 @@ import argparse,calendar,concurrent.futures,datetime as dt,hashlib,json,logging,
 import pathlib,shutil,subprocess,sys,zipfile
 import update_weekly_ohlc as nse
 from email_notifications import queue_report,flush_notifications
+from report_paths import monthly_path
 
 BASE=pathlib.Path(__file__).resolve().parent
 IST=dt.timezone(dt.timedelta(hours=5,minutes=30))
@@ -28,7 +29,7 @@ def atomic_json(path,data):
     temp.write_text(json.dumps(data,indent=2),encoding='utf-8');temp.replace(path)
 
 def report_path(root,start):
-    return root/'outputs'/f'NSE_FO_Monthly_OHLC_{start:%Y-%m}.xlsx'
+    return monthly_path(root,start)
 
 def init_cache(root):
     nse.BASE=root/'monthly_data';nse.BASE.mkdir(exist_ok=True)
@@ -122,7 +123,7 @@ def prepare_month(start,config,logger,offline=False):
 
 def export_month(root,payload,render_dir=None):
     config=json.loads((root/'daily_config.json').read_text(encoding='utf-8'))
-    output=report_path(root,month_start(payload['month']));output.parent.mkdir(exist_ok=True)
+    output=report_path(root,month_start(payload['month']));output.parent.mkdir(parents=True,exist_ok=True)
     temp=output.with_suffix('.pending.xlsx');job=root/'monthly_data'/'build_job.json'
     if temp.exists():temp.unlink()
     atomic_json(job,{'payload':payload,'output':str(temp),'render_dir':str(render_dir) if render_dir else None})
@@ -149,7 +150,7 @@ def run_months(root,months,config,now,logger,offline=False,fetch_only=False,rend
             atomic_json(root/'monthly_data'/'months'/f'{key}.json',payload)
             if fetch_only:continue
             output=export_month(root,payload,render_dir)
-            state['completed'][key]={'file':output.name,'completed_at':now.isoformat(),'sha256':hashlib.sha256(output.read_bytes()).hexdigest()}
+            state['completed'][key]={'file':output.relative_to(root/'outputs').as_posix(),'completed_at':now.isoformat(),'sha256':hashlib.sha256(output.read_bytes()).hexdigest()}
             atomic_json(state_path,state)
             queue_report(root,'monthly:'+key,output,key,'created',logger)
             saved.append(key);logger.info('SAVED monthly report: %s',output)

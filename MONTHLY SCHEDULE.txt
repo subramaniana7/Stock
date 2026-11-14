@@ -5,7 +5,8 @@ Schedule: the 1st of every month at 09:00 India Standard Time.
 First future scheduled run: 1 December 2026, producing November 2026.
 Initial backfill: October 2026, produced immediately during setup.
 
-Each file is separate: outputs\NSE_FO_Monthly_OHLC_YYYY-MM.xlsx
+Each file is separate: outputs\YYYY-MM\Monthly Mon YYYY.xlsx
+Example: outputs\2026-10\Monthly Oct 2026.xlsx
 Sheets: Monthly OHLC, Daily Prices, Sources and Method, CPR Guide.
 Columns match weekly reports, including the weekly six CPR bands,
 three-decimal classification, colours and comma-formatted TradingView symbols.

@@ -81,7 +81,8 @@ def queue_report(root,event_id,report_path,period,action,logger=None):
         try:
             temp.write_text(json.dumps({'id':event_id,'key':key,'filename':report_path.name,'period':period,
                 'action':action,'saved_at':dt.datetime.now(IST).isoformat(),'status':'pending','attempts':0,
-                'recipient':config['recipient'],'sender':config['sender']},indent=2),encoding='utf-8')
+                'recipient':config['recipient'],'sender':config['sender'],
+                'relative_file':report_path.relative_to(root/'outputs').as_posix() if report_path.is_relative_to(root/'outputs') else report_path.name},indent=2),encoding='utf-8')
             try:os.link(temp,path)
             except FileExistsError:return False
         finally:
@@ -101,7 +102,7 @@ def make_message(event):
         +'Report period / trading date: '+event['period']+'\n'
         +'Action: '+event['action']+'\n'
         +'Saved at (India time): '+event['saved_at']+'\n\n'
-        +'The file is available in your local NSE Weekly OHLC outputs folder.\n')
+        +'Location: outputs/'+event.get('relative_file',event['filename'])+'\n')
     return message
 
 def smtp_send(config,event,credential_reader=read_password):

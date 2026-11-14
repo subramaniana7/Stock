@@ -13,7 +13,7 @@ assumed. Closures come from the NSE CM/FO holiday calendar. Weekend sessions
 can be entered in daily_config.json: additional_sessions; any closure override
 goes in additional_closures. No blank holiday or ordinary weekend sheets.
 
-One new workbook per Monday-Friday week in the SAME local outputs folder:
+One new workbook per Monday-Friday week in outputs\YYYY-MM (Monday's month):
 NSE_FO_Daily_OHLC_YYYY-MM-DD_to_YYYY-MM-DD.xlsx
 One dated sheet per trading day, plus Sources containing URL/hash metadata.
 Daily columns: Stock Symbol, Daily Open, Daily High, Daily Low, Daily Close.

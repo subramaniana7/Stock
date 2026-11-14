@@ -22,7 +22,7 @@ class DailyTests(unittest.TestCase):
             root=pathlib.Path(tmp); calls=[]; builds=[]
             def collect(day,offline): calls.append(day); return {'date':str(day),'rows':[['TEST',10,12,9,11]]}
             def build(root,config,payload,render):
-                builds.append(sorted(payload['days'])); out=d.workbook_path(root,dt.date.fromisoformat(payload['week_start'])); out.parent.mkdir(exist_ok=True)
+                builds.append(sorted(payload['days'])); out=d.workbook_path(root,dt.date.fromisoformat(payload['week_start'])); out.parent.mkdir(parents=True,exist_ok=True)
                 # Minimal workbook metadata sufficient for the resume validator.
                 names=[d.sheet_name(dt.date.fromisoformat(x)) for x in sorted(payload['days'])]+['Sources','CPR Guide']
                 with zipfile.ZipFile(out,'w') as z:

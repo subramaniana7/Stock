@@ -40,6 +40,7 @@ class SchedulerTests(unittest.TestCase):
             def invoke(monday):
                 calls.append(monday)
                 if monday in fail: raise OSError('Simulated network outage')
+                s.report_path(root,monday).parent.mkdir(parents=True,exist_ok=True)
                 with zipfile.ZipFile(s.report_path(root,monday),'w') as z: z.writestr('xl/workbook.xml','<workbook/>')
             logger=logging.getLogger('tests'); logger.addHandler(logging.NullHandler())
             now=dt.datetime(2026,11,23,12,tzinfo=s.IST)
@@ -59,9 +60,12 @@ class SchedulerTests(unittest.TestCase):
             result=subprocess.run([sys.executable,str(u.BASE/'update_weekly_ohlc.py'),'--week-start','2026-11-02','--as-of','2026-11-07','--offline','--auto-holidays','--output-dir',folder],capture_output=True,text=True)
             self.assertEqual(result.returncode,0,result.stdout+result.stderr)
             from openpyxl import load_workbook
-            workbook=load_workbook(pathlib.Path(folder)/'NSE_FO_Weekly_OHLC_2026-11-02_2026-11-06.xlsx',data_only=True)
+            from report_paths import weekly_path
+            workbook=load_workbook(weekly_path(u.BASE,dt.date(2026,11,2),pathlib.Path(folder)),data_only=True)
             rows=[list(r) for r in workbook['Weekly OHLC'].iter_rows(min_row=2,max_row=219,max_col=5,values_only=True)]
-            original=json.loads((u.BASE/'outputs/NSE_FO_Weekly_OHLC_2026-11-02_2026-11-06.json').read_text())
+            fixture=weekly_path(u.BASE,dt.date(2026,11,2)).with_suffix('.json')
+            if not fixture.exists():fixture=u.BASE/'outputs/NSE_FO_Weekly_OHLC_2026-11-02_2026-11-06.json'
+            original=json.loads(fixture.read_text())
             self.assertEqual([list(r) for r in rows],original['calculated'])
             self.assertEqual(len(rows),218)
 

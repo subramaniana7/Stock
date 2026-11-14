@@ -3,6 +3,7 @@ import argparse, datetime as dt, hashlib, json, logging, logging.handlers, math
 import pathlib, shutil, subprocess, sys, zipfile, xml.etree.ElementTree as ET
 import update_weekly_ohlc as nse
 from email_notifications import queue_report,flush_notifications
+from report_paths import daily_path
 
 BASE=pathlib.Path(__file__).resolve().parent
 IST=dt.timezone(dt.timedelta(hours=5,minutes=30))
@@ -16,7 +17,7 @@ def atomic_json(path,data):
 def monday_of(day): return day-dt.timedelta(days=day.weekday())
 
 def workbook_path(root,monday):
-    return root/'outputs'/f'NSE_FO_Daily_OHLC_{monday}_to_{monday+dt.timedelta(days=4)}.xlsx'
+    return daily_path(root,monday)
 
 def sheet_name(day): return day.strftime('%d-%b-%Y')
 
@@ -84,7 +85,7 @@ def workbook_valid(path,days):
 
 def build_book(root,config,payload,render_dir=None):
     monday=dt.date.fromisoformat(payload['week_start'])
-    output=workbook_path(root,monday); output.parent.mkdir(exist_ok=True)
+    output=workbook_path(root,monday); output.parent.mkdir(parents=True,exist_ok=True)
     temporary=output.with_suffix('.pending.xlsx')
     if temporary.exists(): temporary.unlink()
     job=root/'daily_data'/'build_job.json'

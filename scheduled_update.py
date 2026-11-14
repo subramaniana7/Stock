@@ -2,6 +2,7 @@
 import argparse, contextlib, datetime as dt, hashlib, json, logging, logging.handlers
 import os, pathlib, subprocess, sys, zipfile
 from email_notifications import flush_notifications
+from report_paths import weekly_path
 
 BASE=pathlib.Path(__file__).resolve().parent
 IST=dt.timezone(dt.timedelta(hours=5,minutes=30))
@@ -19,7 +20,7 @@ def due_runs(first_run, now):
     return due
 
 def report_path(root, monday):
-    return root/'outputs'/f'NSE_FO_Weekly_OHLC_{monday}_{monday+dt.timedelta(days=4)}.xlsx'
+    return weekly_path(root,monday)
 
 def intact_receipt(root,monday,receipt):
     path=report_path(root,monday)
@@ -42,7 +43,7 @@ def run_pending(root,config,now,invoke,logger):
             path=report_path(root,monday)
             with zipfile.ZipFile(path) as z:
                 if z.testzip() or 'xl/workbook.xml' not in z.namelist(): raise ValueError('Invalid exported workbook')
-            state['completed'][key]={'scheduled_for':scheduled.isoformat(),'completed_at':now.isoformat(),'file':path.name,'sha256':hashlib.sha256(path.read_bytes()).hexdigest()}
+            state['completed'][key]={'scheduled_for':scheduled.isoformat(),'completed_at':now.isoformat(),'file':path.relative_to(root/'outputs').as_posix(),'sha256':hashlib.sha256(path.read_bytes()).hexdigest()}
             atomic_json(state_path,state)
             logger.info('SUCCESS: %s',path)
         except Exception as ex:

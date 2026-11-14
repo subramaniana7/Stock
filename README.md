@@ -146,7 +146,21 @@ data when available. Offline tests need those files already cached.
 
 ## Local outputs and state
 
-Reports are written to `outputs/`. Original archives, calendars, logs, completion
+Reports are written to `outputs/YYYY-MM/`. Monthly workbooks use names such as
+`Monthly Oct 2026.xlsx`, and weekly workbooks use `Weekly Nov 9-13 2026.xlsx`.
+Daily workbook names remain unchanged. Weekly reports and their daily-workbook
+counterparts belong to the month of their Monday: for example, `Weekly Nov
+30-Dec 4 2026.xlsx` is stored in `outputs/2026-11/`. Cross-year weeks include both
+years, e.g. `Weekly Dec 28 2026-Jan 1 2027.xlsx`. Monthly files belong to their
+report month, and the year in names/folders prevents annual collisions.
+
+Run `migrate_output_folders.py <installation-folder> --apply` once to move legacy
+root-level files without rewriting their contents. It verifies file hashes,
+updates completion receipts and unsent email locations, and leaves sent-email
+records unchanged. Existing destinations are never overwritten. A move manifest
+and previous state files are saved under `backups/`.
+
+Original archives, calendars, logs, completion
 receipts and machine-specific configs stay local and are excluded by `.gitignore`.
 Generated daily workbooks are regenerated from their validated daily records;
 keep personal edits in a separate analysis copy. Close workbooks during updates;
